@@ -1,66 +1,68 @@
-## Steps to run MiniKube cluster
+## How to apply new version of webapp
 
-<hr />
-
-### First step:
-
-Run the POD manifest file (yaml)
-
-- This will run the pod(s) and registered their labels so as to identify later by services.
+### 1. Update the label of the service to include version number also
+Update the deployment.yaml as shown below -
 
 ```
-    kubctl apply -f deployment.yaml
+   ...
+    labels:
+    app: webapp
+    release: "0.0"
+   ...
+```
+Add another configuration for the new version (0.5) as shown below -
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp-0.5
+  labels:
+    app: webapp
+    release: "0.5"
+spec:
+  containers:
+    - name: webapp
+      image: richardchesterwood/k8s-fleetman-webapp-angular:release0-5
 ```
 
-### Second step:
+### 2. Update the service manifest (YAML) to point to the new version
+```
+spec:
+  ...
+  selector:
+    app: webapp
+    release: "0.5"
+  ...
+```
 
-Run the Service(s) manifest file (yaml)
-
+### 3. Apply both manifest files
+```
+    kubectl apply -f deployment.yaml
+```
 ```
     kubectl apply -f services.yaml
 ```
 
-### Third step:
-
-Check whether the containers inside the pod are running properly/working.
-
+### 4. Check whether the service points to new version
 ```
-    kubectl exec -it webapp sh
-    /# wget http://localhost:80
-    /# cat index.html
+    kubectl describe service fleetman-webapp
 ```
-
-### Fourth step
-
-Access the service as shown below -
-
+You'll see output similar to something below -
 ```
-    curl http://127.0.0.1/30000
-```
-
-##### Note: Below applies to MacOS only.
-
-For Mac, I found the above curl/browser not working. So Mac users, please follow below one!
-
-```
-minikube service --url fleetman-webapp
+Name:                     fleetman-webapp
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=webapp,release=0.5
+Type:                     NodePort
+IP:                       10.102.217.123
+Port:                     http  80/TCP
+TargetPort:               80/TCP
+NodePort:                 http  30000/TCP
+Endpoints:                172.18.0.4:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   <none>
 ```
 
-It'll return IP:Port of services (tunnel) as shown something like below -
-
-```
-🏃  Starting tunnel for service fleetman-webapp.
-|-----------|-----------------|-------------|------------------------|
-| NAMESPACE |      NAME       | TARGET PORT |          URL           |
-|-----------|-----------------|-------------|------------------------|
-| default   | fleetman-webapp |             | http://127.0.0.1:50011 |
-|-----------|-----------------|-------------|------------------------|
-```
-
-### Final step(for Mac users only)
-
-Run the service from curl/browser as shown below
-
-```
-    curl http://http://127.0.0.1:50011
-```
+As we can see above, service is now pointing to later version fo the webapp (release 0.5)

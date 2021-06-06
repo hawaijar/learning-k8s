@@ -8,6 +8,7 @@ spec:
   # this will become n/w endpoint for other services or external users (browser etc)
   selector:
     app: webapp
+    release: "0.5"
 
   ports:
     - name: http
